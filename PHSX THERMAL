@@ -1,0 +1,265 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Error Propagation Rules"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Rule #1 If $Q = cA$ where $c$ is a constant \n",
+    "    (or a quantity with negligible uncertainty)\n",
+    "\n",
+    "Then \n",
+    "\n",
+    "$\\frac{\\delta Q}{|Q|} = \\frac{\\delta A}{|A|}$ or equivalently $\\delta Q = |c|\\delta A$"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def err_R1(c, err_A):\n",
+    "    err_Q = np.abs(c)*err_A\n",
+    "    return err_Q"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Rule #2 $Q = cA^m$ where $c$ and $m$ are constants\n",
+    "\n",
+    "Then\n",
+    "\n",
+    "$\\delta Q = |cmA^{(m-1)}|\\delta A$"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def err_R2(c, m, err_A):\n",
+    "    err_Q = np.abs(c*m*A**(m-1))*err_A\n",
+    "    return err_Q"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Rule #3 $Q = A + B$ or $Q = A - B$\n",
+    "\n",
+    "Then\n",
+    "\n",
+    "$\\delta Q = \\sqrt{(\\delta A)^2 + (\\delta B)^2}$"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def err_R3(deltas):\n",
+    "    err_Q = np.sqrt(np.sum(deltas**2))\n",
+    "    return err_Q"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Rule #4 $Q = cA^mB^n$ where $c, m,$ and $n$ are constants\n",
+    "\n",
+    "Then\n",
+    "\n",
+    "$\\delta Q = |Q|\\sqrt{(m\\frac{\\delta A}{A})^2 + (n\\frac{\\delta B}{B})^2}$"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def err_R4(Q, consts, deltas, vals):\n",
+    "    err_Q = np.abs(Q)*np.sqrt(np.sum((consts*deltas/vals)**2))\n",
+    "    return err_Q"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def thermal_a(DL, L, Tf, Ti):\n",
+    "    a = DL/(L*(Tf - Ti))\n",
+    "    return a"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.7228309558266145e-05  1/°C ±  2.615307978828764e-07 1/°C\n"
+     ]
+    }
+   ],
+   "source": [
+    "L = 1.05\n",
+    "dL = 0.001 # 1 * 10**(-3)\n",
+    "DL = 0.00125 # 1.25* 10**(-3)\n",
+    "dDL = 0.00001 #0.01 * 10**(-3)\n",
+    "Ti = 23.4 #degrees C\n",
+    "Tf = 92.5\n",
+    "dTi = 0.3\n",
+    "dTf = 0.1\n",
+    "\n",
+    "a = thermal_a(DL, L, Tf, Ti)\n",
+    "cons = np.array([1,-1,-1,-1])\n",
+    "delt = np.array([dDL, dL, dTf, dTi])\n",
+    "vals = np.array([DL, L, Tf, Ti])\n",
+    "\n",
+    "da = err_R4(a, cons, delt, vals)\n",
+    "\n",
+    "print(a, \" 1/°C ± \", da, \"1/°C\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.6599559489190056e-05  1/°C ±  1.8486041213039883e-07 1/°C\n",
+      "1.7e-05  <=  1.7e-05  <=  1.7e-05\n"
+     ]
+    }
+   ],
+   "source": [
+    "L = 0.745 # m\n",
+    "dL = 0.005 # m\n",
+    "DL = 0.0008 # m\n",
+    "dDL = 0.000005 # m\n",
+    "dDL = err_R3(np.array([dDL, dDL]))\n",
+    "\n",
+    "Oi = 112400 #Ohm\n",
+    "dOi = 100 #Ohm\n",
+    "Ti = 22.36 #deg C\n",
+    "Of = 8460 #Ohm\n",
+    "dOf = 10 #Ohm\n",
+    "Tf = 87.05 # deg C\n",
+    "dTi = 0.02 # deg C\n",
+    "dTf = 0.02 # deg C\n",
+    "\n",
+    "a = thermal_a(DL, L, Tf, Ti)\n",
+    "cons = np.array([1,-1,-1,-1])\n",
+    "delt = np.array([dDL, dL, dTf, dTi])\n",
+    "vals = np.array([DL, L, Tf, Ti])\n",
+    "\n",
+    "da = err_R4(a, cons, delt, vals)\n",
+    "print(a, \" 1/°C ± \", da, \"1/°C\")\n",
+    "print((round(a,6)-round(da,6)), \" <= \", 1.7*(10**(-5)), \" <= \", (round(a,6)+round(da,6)))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2.532607319235153e-05  1/°C ±  2.27982510565769e-07 1/°C\n",
+      "2.5e-05  <=  2.5e-05  <=  2.5e-05\n"
+     ]
+    }
+   ],
+   "source": [
+    "L = 0.745 # m\n",
+    "dL = 0.005 # m\n",
+    "DL = 0.00119 # m\n",
+    "dDL = 0.000005 # m\n",
+    "dDL = err_R3(np.array([dDL, dDL]))\n",
+    "\n",
+    "Oi = 98500 #Ohm\n",
+    "dOi = 100 #Ohm\n",
+    "Ti = 25.17 #deg C\n",
+    "Of = 8130 #Om\n",
+    "dOf = 100 #Ohm\n",
+    "Tf = 88.24 # deg C\n",
+    "dTi = 0.02 # deg C\n",
+    "dTf = 0.02 # deg C\n",
+    "\n",
+    "\n",
+    "a = thermal_a(DL, L, Tf, Ti)\n",
+    "cons = np.array([1,-1,-1,-1])\n",
+    "delt = np.array([dDL, dL, dTf, dTi])\n",
+    "vals = np.array([DL, L, Tf, Ti])\n",
+    "\n",
+    "da = err_R4(a, cons, delt, vals)\n",
+    "print(a, \" 1/°C ± \", da, \"1/°C\")\n",
+    "\n",
+    "print((round(a,6)-round(da,6)), \" <= \", 2.5*(10**(-5)), \" <= \", (round(a,6)+round(da,6)))\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.8"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
